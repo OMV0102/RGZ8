@@ -1,7 +1,12 @@
 #include <windows.h>
 #include <string>
 
-HWND hwnd, button_start, button_exit, button_clear, screenWidthLabel;
+using namespace std;
+
+LPCSTR szClassName = "Control Source"; // имя класса формы
+LPCSTR szTitle = "Высота экрана / SSE_3"; // имя окна (заголовок)
+
+HWND hwnd, button_start, button_exit, button_clear, label;
 static HBRUSH hBrush = CreateSolidBrush(BLACK_BRUSH);
 int Height = 150;
 int Width = 300;
@@ -10,35 +15,46 @@ int ButtonWidth = 80;
 
 void clear()
 {
-	SetWindowText(screenWidthLabel, LPCSTR(""));
+	SetWindowText(label, LPCSTR(""));
 }
 
-// Функция обращения к DLL
+char info[256];
+
 void DLL()
 {
-	// загрузка библиотеки
+	SetWindowText(label, LPCSTR(""));
+
 	HINSTANCE hinstLib = LoadLibrary(TEXT("dynamic_lib.dll"));
 	if (hinstLib != NULL)
 	{
 		typedef int(*ImportFunction)();
-		ImportFunction getSystemMetrics = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
-		ImportFunction cpuid = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
+		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
+		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
 
-		// получаем ширину и информацию о ЦП, затем проверяем наличие технологии SSE2 и выгружаем библиотеку
-		int Width = getSystemMetrics();
-		int sse3 = cpuid(); // получение информации
+		// если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
+		if (heightFunc == NULL && sse3Func == NULL)
+		{
+			sprintf_s(info, "В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\nВозможно вы используете не оригинальную библиотеку!");
+			SetWindowText(label, LPCSTR(info));
+		}
+		else if (heightFunc != NULL && sse3Func == NULL)
+		{
+
+		}
+		int height = heightFunc();
+		int sse3 = sse3Func();
 		FreeLibrary(hinstLib);
 
-		char result[128];
 		if(sse3 == 1)
-			sprintf_s(result, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "поддерживается");
+			sprintf_s(info, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "поддерживается");
 		else
-			sprintf_s(result, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "не поддерживается");
-		SetWindowText(screenWidthLabel, LPCSTR(result));
+			sprintf_s(info, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "не поддерживается");
+		SetWindowText(label, LPCSTR(info));
 	}
 	else
 	{
-		MessageBox(hwnd,"Отсутствует библиотека!", "Ошибка", 0);
+		sprintf_s(info, "Библиотека dynamic_lib.dll не найдена!\nПоместите файл dynamic_lib.dll в папку\nс программой и нажмите кнопку \"Обновить данные\"!");
+		SetWindowText(label, LPCSTR(info));
 	}
 }
 
@@ -90,7 +106,7 @@ int WINAPI WinMain(HINSTANCE hInstance,	HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	WNDCLASS wc;
 	memset(&wc, 0, sizeof(WNDCLASS));
-	wc.lpszClassName = "proj";
+	wc.lpszClassName = szClassName;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = WndProc;			// Обработчик сообщений
 	wc.hInstance = hInstance;
@@ -101,11 +117,11 @@ int WINAPI WinMain(HINSTANCE hInstance,	HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HDC hDCScreen = GetDC(NULL);
 
 
-	hwnd = CreateWindow("proj", "Проверка ширины и SSE2",
+	hwnd = CreateWindow(szClassName, szTitle,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		600, 600, Width, Height, NULL, NULL, hInstance, NULL);
 
-	screenWidthLabel = CreateWindow("static", "", WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON,
+	label = CreateWindow("static", "", WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON,
 		5, 5, Width - 15, Height * 0.3, hwnd, (HMENU)0, hInstance, NULL);
 
 	button_start = CreateWindow("button", "ЗАПУСК",
