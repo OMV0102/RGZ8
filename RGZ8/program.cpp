@@ -13,11 +13,6 @@ int Width = 300;
 int ButtonHeight = 20;
 int ButtonWidth = 80;
 
-void clear()
-{
-	SetWindowText(label, LPCSTR(""));
-}
-
 char info[256];
 
 void DLL()
@@ -29,31 +24,41 @@ void DLL()
 	{
 		typedef int(*ImportFunction)();
 		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
-		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
-
+		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3Q");
+		int height, sse3;
 		// если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
 		if (heightFunc == NULL && sse3Func == NULL)
 		{
-			sprintf_s(info, "В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\nВозможно вы используете не оригинальную библиотеку!");
-			SetWindowText(label, LPCSTR(info));
+			sprintf_s(info, " В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\nВозможно вы используете не оригинальную библиотеку!");
 		}
 		else if (heightFunc != NULL && sse3Func == NULL)
 		{
-
+			int height = heightFunc();
+			sprintf_s(info, " Высота экрана: %d (в пикселях)\nПоддержка SSE3: не удалось определить", height);
 		}
-		int height = heightFunc();
-		int sse3 = sse3Func();
-		FreeLibrary(hinstLib);
-
-		if(sse3 == 1)
-			sprintf_s(info, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "поддерживается");
-		else
-			sprintf_s(info, "Высота экрана %d пикселей\nТехнология SSE3 %s", Width, "не поддерживается");
+		else if (heightFunc != NULL && sse3Func != NULL)
+		{
+			int height = heightFunc();
+			sse3 = sse3Func();
+			if (sse3 == 1)
+				sprintf_s(info, " Высота экрана: %d (в пикселях)\nТехнология SSE3: поддерживается", height);
+			else
+				sprintf_s(info, " Высота экрана: %d (в пикселях)\nТехнология SSE3: не поддерживается", height);
+		}
+		else if (heightFunc == NULL && sse3Func != NULL)
+		{
+			sse3 = sse3Func();
+			if (sse3 == 1)
+				sprintf_s(info, " Высота экрана: не удалось определить\nТехнология SSE3: поддерживается");
+			else
+				sprintf_s(info, " Высота экрана: не удалось определить\nТехнология SSE3: не поддерживается");
+		}
 		SetWindowText(label, LPCSTR(info));
+		FreeLibrary(hinstLib);
 	}
 	else
 	{
-		sprintf_s(info, "Библиотека dynamic_lib.dll не найдена!\nПоместите файл dynamic_lib.dll в папку\nс программой и нажмите кнопку \"Обновить данные\"!");
+		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\nПоместите файл dynamic_lib.dll в папку\nс программой и нажмите кнопку \"Обновить данные\"!");
 		SetWindowText(label, LPCSTR(info));
 	}
 }
@@ -124,17 +129,9 @@ int WINAPI WinMain(HINSTANCE hInstance,	HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	label = CreateWindow("static", "", WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON,
 		5, 5, Width - 15, Height * 0.3, hwnd, (HMENU)0, hInstance, NULL);
 
-	button_start = CreateWindow("button", "ЗАПУСК",
+	button_start = CreateWindow("button", "Обновить данные",
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER, Width - 2 * ButtonWidth - 10, Height - ButtonHeight*3,
 		ButtonWidth, ButtonHeight, hwnd, (HMENU)1, hInstance, NULL);
-
-	button_exit = CreateWindow("button", "ВЫХОД",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER, Width - ButtonWidth - 10, Height - ButtonHeight * 3,
-		ButtonWidth, ButtonHeight, hwnd, (HMENU)2, hInstance, NULL);
-
-	button_clear = CreateWindow("button", "ОЧИСТИТЬ ТЕКСТ",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER, Width - 3.5*ButtonWidth - 20, Height - ButtonHeight * 3,
-		ButtonWidth * 1.75, ButtonHeight, hwnd, (HMENU)3, hInstance, NULL);
 
 	ShowWindow(hwnd, nCmdShow);
 
