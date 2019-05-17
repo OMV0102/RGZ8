@@ -14,24 +14,25 @@ DWORD WINAPI ThreadFunc(void*)
 {
 	SetWindowText(label, LPCSTR(""));
 
+	// Загружаем библиотеку
 	HINSTANCE hinstLib = LoadLibrary(TEXT("dynamic_lib.dll"));
-	if (hinstLib != NULL)
+	if (hinstLib != NULL)	// Если библиотека загрузилась
 	{
 		typedef int(*ImportFunction)();
-		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screenf");
-		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3f");
+		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
+		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
 		int height, sse3;
-		// Если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
+		// Если обе функции не найдены в библиотеке
 		if (heightFunc == NULL && sse3Func == NULL)
 		{
-			sprintf_s(info, " В библиотеке dynamic_lib.dll\n не найдены нужные функции!\n Возможно вы используете\n не оригинальную библиотеку!");
+			sprintf_s(info, "\n В библиотеке dynamic_lib.dll\n не найдены нужные функции!");
 		}
-		else if (heightFunc != NULL && sse3Func == NULL)
+		else if (heightFunc != NULL && sse3Func == NULL)	// Если не найдена только функция sse3Func
 		{
 			int height = heightFunc();
 			sprintf_s(info, "\n Высота экрана: %d (в пикселях)\n Поддержка SSE3: не удалось определить", height);
 		}
-		else if (heightFunc != NULL && sse3Func != NULL)
+		else if (heightFunc != NULL && sse3Func != NULL)	 // Если обе функции возаратилил значения
 		{
 			int height = heightFunc();
 			sse3 = sse3Func();
@@ -40,7 +41,7 @@ DWORD WINAPI ThreadFunc(void*)
 			else
 				sprintf_s(info, "\n Высота экрана: %d (в пикселях)\n Технология SSE3: не поддерживается", height);
 		}
-		else if (heightFunc == NULL && sse3Func != NULL)
+		else if (heightFunc == NULL && sse3Func != NULL)	// Если не найдена только функция heightFunc
 		{
 			sse3 = sse3Func();
 			if (sse3 == 1)
@@ -48,14 +49,13 @@ DWORD WINAPI ThreadFunc(void*)
 			else
 				sprintf_s(info, "\n Высота экрана: не удалось определить\n Технология SSE3: не поддерживается");
 		}
-		SetWindowText(label, LPCSTR(info));
-		FreeLibrary(hinstLib);
+		FreeLibrary(hinstLib); // Закрываем библиотеку
 	}
-	else
+	else	// Если библиотека не загрузилась
 	{
 		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку\n \" Обновить данные \".");
-		SetWindowText(label, LPCSTR(info));
 	}
+	SetWindowText(label, LPCSTR(info));	// Записываем текст в текстовое поле
 	return 0;
 }
 
@@ -100,6 +100,7 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 	MSG msg;
 	HANDLE hThread;
 	DWORD IDThread;
+	// Создание и заполнение класса окна
 	WNDCLASS wcl;
 	wcl.hInstance = hThisInst;
 	wcl.lpszClassName = szClassName;
@@ -111,29 +112,34 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 	wcl.cbWndExtra = 0;
 	wcl.cbClsExtra = 0;
 	wcl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	RegisterClass(&wcl);
+	RegisterClass(&wcl);	// Регистрация класса окна
 
+	// Создание окна
 	hwnd = CreateWindow(szClassName, szTitle,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
 		600, 500, 320, 155, NULL, NULL, hThisInst, NULL);
 
+	// Создание текстового поля
 	label = CreateWindow("static", "",
-		WS_CHILD | WS_VISIBLE,
-		2, 2, 300, 70,
+		WS_CHILD | WS_VISIBLE,	// Стиль
+		2, 2, 300, 70,			// Положение и размеры
 		hwnd, NULL, hThisInst, NULL);
 
+	// Создание кнопки
 	CreateWindow("button", "Обновить данные",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		75, 80, 150, 30,
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,	// Стиль кнопки
+		75, 80, 150, 30,						// Положение и размеры
 		hwnd, NULL, hThisInst, NULL);
 
+	// Вызов функцию ThreadFunc в новом потоке
 	hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread);
 	CloseHandle(hThread);
 
+	// Отображение окна на экране
 	ShowWindow(hwnd, nWinMode);
 	UpdateWindow(hwnd);
 
-	
+	// Обработка сообщений
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		TranslateMessage(&msg);
