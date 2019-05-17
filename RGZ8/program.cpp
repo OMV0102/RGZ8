@@ -7,11 +7,6 @@ LPCSTR szClassName = "Control Source";		// Имя класса формы
 LPCSTR szTitle = "Высота экрана / SSE_3";	// Имя окна (заголовок)
 
 HWND hwnd, label;
-static HBRUSH hBrush = CreateSolidBrush(BLACK_BRUSH);
-int Height = 150;
-int Width = 300;
-int ButtonHeight = 30;
-int ButtonWidth = 150;
 
 char info[256];
 
@@ -23,13 +18,13 @@ DWORD WINAPI ThreadFunc(void*)
 	if (hinstLib != NULL)
 	{
 		typedef int(*ImportFunction)();
-		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
-		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
+		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screenf");
+		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3f");
 		int height, sse3;
 		// Если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
 		if (heightFunc == NULL && sse3Func == NULL)
 		{
-			sprintf_s(info, "\n В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\n Возможно вы используете не оригинальную библиотеку!");
+			sprintf_s(info, " В библиотеке dynamic_lib.dll\n не найдены нужные функции!\n Возможно вы используете\n не оригинальную библиотеку!");
 		}
 		else if (heightFunc != NULL && sse3Func == NULL)
 		{
@@ -58,7 +53,7 @@ DWORD WINAPI ThreadFunc(void*)
 	}
 	else
 	{
-		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку \"Обновить данные\"!");
+		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку\n \" Обновить данные \".");
 		SetWindowText(label, LPCSTR(info));
 	}
 	return 0;
@@ -80,8 +75,8 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		// При создании текстового поля устанавливаем фон и цвет текста
 		case WM_CTLCOLORSTATIC:
 		{		
-				SetTextColor((HDC)wParam, RGB(255, 255, 0));	// текст желтого цвета
-				SetBkColor((HDC)wParam, RGB(0, 0, 0));			// фон черного цвета
+				SetTextColor((HDC)wParam, RGB(255, 255, 255));
+				SetBkColor((HDC)wParam, RGB(0, 0, 0));
 				return (INT_PTR)GetStockObject(BLACK_BRUSH);
 		}
 		break;
@@ -120,16 +115,16 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 
 	hwnd = CreateWindow(szClassName, szTitle,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-		600, 500, Width, Height, NULL, NULL, hThisInst, NULL);
+		600, 500, 320, 155, NULL, NULL, hThisInst, NULL);
 
 	label = CreateWindow("static", "",
 		WS_CHILD | WS_VISIBLE,
-		5, 5, Width - 15, Height * 0.3,
+		2, 2, 300, 70,
 		hwnd, NULL, hThisInst, NULL);
 
 	CreateWindow("button", "Обновить данные",
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		50, Height - ButtonHeight*3, ButtonWidth, ButtonHeight,
+		75, 80, 150, 30,
 		hwnd, NULL, hThisInst, NULL);
 
 	hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread);
