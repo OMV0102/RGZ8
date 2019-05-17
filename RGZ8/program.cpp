@@ -3,10 +3,10 @@
 
 using namespace std;
 
-LPCSTR szClassName = "Control Source"; // имя класса формы
-LPCSTR szTitle = "Высота экрана / SSE_3"; // имя окна (заголовок)
+LPCSTR szClassName = "Control Source";		// Имя класса формы
+LPCSTR szTitle = "Высота экрана / SSE_3";	// Имя окна (заголовок)
 
-HWND hwnd, button_start, button_exit, button_clear, label;
+HWND hwnd, label;
 static HBRUSH hBrush = CreateSolidBrush(BLACK_BRUSH);
 int Height = 150;
 int Width = 300;
@@ -24,41 +24,41 @@ DWORD WINAPI ThreadFunc(void*)
 	{
 		typedef int(*ImportFunction)();
 		ImportFunction heightFunc = (ImportFunction)GetProcAddress(hinstLib, "height_screen");
-		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3Q");
+		ImportFunction sse3Func = (ImportFunction)GetProcAddress(hinstLib, "cpuid_sse3");
 		int height, sse3;
-		// если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
+		// Если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
 		if (heightFunc == NULL && sse3Func == NULL)
 		{
-			sprintf_s(info, " В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\nВозможно вы используете не оригинальную библиотеку!");
+			sprintf_s(info, " В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\n Возможно вы используете не оригинальную библиотеку!");
 		}
 		else if (heightFunc != NULL && sse3Func == NULL)
 		{
 			int height = heightFunc();
-			sprintf_s(info, " Высота экрана: %d (в пикселях)\nПоддержка SSE3: не удалось определить", height);
+			sprintf_s(info, " Высота экрана: %d (в пикселях)\n Поддержка SSE3: не удалось определить", height);
 		}
 		else if (heightFunc != NULL && sse3Func != NULL)
 		{
 			int height = heightFunc();
 			sse3 = sse3Func();
 			if (sse3 == 1)
-				sprintf_s(info, " Высота экрана: %d (в пикселях)\nТехнология SSE3: поддерживается", height);
+				sprintf_s(info, " Высота экрана: %d (в пикселях)\n Технология SSE3: поддерживается", height);
 			else
-				sprintf_s(info, " Высота экрана: %d (в пикселях)\nТехнология SSE3: не поддерживается", height);
+				sprintf_s(info, " Высота экрана: %d (в пикселях)\n Технология SSE3: не поддерживается", height);
 		}
 		else if (heightFunc == NULL && sse3Func != NULL)
 		{
 			sse3 = sse3Func();
 			if (sse3 == 1)
-				sprintf_s(info, " Высота экрана: не удалось определить\nТехнология SSE3: поддерживается");
+				sprintf_s(info, " Высота экрана: не удалось определить\n Технология SSE3: поддерживается");
 			else
-				sprintf_s(info, " Высота экрана: не удалось определить\nТехнология SSE3: не поддерживается");
+				sprintf_s(info, " Высота экрана: не удалось определить\n Технология SSE3: не поддерживается");
 		}
 		SetWindowText(label, LPCSTR(info));
 		FreeLibrary(hinstLib);
 	}
 	else
 	{
-		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\nПоместите файл dynamic_lib.dll в папку\nс программой и нажмите кнопку \"Обновить данные\"!");
+		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку \"Обновить данные\"!");
 		SetWindowText(label, LPCSTR(info));
 	}
 	return 0;
@@ -66,33 +66,36 @@ DWORD WINAPI ThreadFunc(void*)
 
 LRESULT CALLBACK WindowFunc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	HANDLE hThread;
+	DWORD IDThread;
 	switch (msg)
 	{ 
-		case WM_CTLCOLORSTATIC: // выставление свойств перед отрисовкой текстового поля
-		{		
-				HDC hdcStatic = (HDC)wParam;
-				SetTextColor(hdcStatic, RGB(255, 0, 0));
-				SetBkColor(hdcStatic, RGB(0, 0, 0));
-				return (INT_PTR)hBrush;
-				break;
-		}
-		
+		// При нажатии на кнопку "Обновить данные" вызываем функцию ThreadFunc в новом потоке
 		case WM_COMMAND:
 		{
-			if (LOWORD(wParam) == 1) // запуск
-			{
-				HANDLE hThread;
-				DWORD IDThread;
-				hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread); // Запускаем функцию в новом потоке
-				CloseHandle(hThread);
-			}
-			break;
+			hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread);
+			CloseHandle(hThread);
 		}
+		break;
+		// При создании текстового поля устанавливаем фон и цвет текста
+		case WM_CTLCOLORSTATIC:
+		{		
+				SetTextColor((HDC)wParam, RGB(255, 255, 0));	// текст желтого цвета
+				SetBkColor((HDC)wParam, RGB(0, 0, 0));			// фон черного цвета
+				return (INT_PTR)GetStockObject(BLACK_BRUSH);
+		}
+		break;
+		// Закрытие программы
 		case WM_DESTROY:
+		{
 			PostQuitMessage(0);
-			break;
+		}
+		break;
+		// По умолчанию
 		default:
+		{
 			return DefWindowProc(hwnd, msg, wParam, lParam);
+		}
 	}
 	return 0;
 }
@@ -100,8 +103,9 @@ LRESULT CALLBACK WindowFunc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinMode)
 {
 	MSG msg;
+	HANDLE hThread;
+	DWORD IDThread;
 	WNDCLASS wcl;
-
 	wcl.hInstance = hThisInst;
 	wcl.lpszClassName = szClassName;
 	wcl.lpfnWndProc = WindowFunc;
@@ -114,22 +118,24 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 	wcl.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	RegisterClass(&wcl);
 
-	HDC hDCScreen = GetDC(NULL);
-
-
 	hwnd = CreateWindow(szClassName, szTitle,
-		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
 		600, 600, Width, Height, NULL, NULL, hThisInst, NULL);
 
-	label = CreateWindow("static", "", WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON,
-		5, 5, Width - 15, Height * 0.3, hwnd, (HMENU)0, hThisInst, NULL);
+	label = CreateWindow("static", "",
+		WS_CHILD | WS_VISIBLE,
+		5, 5, Width - 15, Height * 0.3,
+		hwnd, NULL, hThisInst, NULL);
 
-	button_start = CreateWindow("button", "Обновить данные",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER, Width - 2 * ButtonWidth - 10, Height - ButtonHeight*3,
-		ButtonWidth, ButtonHeight, hwnd, (HMENU)1, hThisInst, NULL);
+	CreateWindow("button", "Обновить данные",
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER,
+		Width - 2 * ButtonWidth - 10, Height - ButtonHeight*3, ButtonWidth, ButtonHeight,
+		hwnd, NULL, hThisInst, NULL);
+
+	hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread);
+	CloseHandle(hThread);
 
 	ShowWindow(hwnd, nWinMode);
-
 	UpdateWindow(hwnd);
 
 	
