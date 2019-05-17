@@ -10,8 +10,8 @@ HWND hwnd, label;
 static HBRUSH hBrush = CreateSolidBrush(BLACK_BRUSH);
 int Height = 150;
 int Width = 300;
-int ButtonHeight = 20;
-int ButtonWidth = 80;
+int ButtonHeight = 30;
+int ButtonWidth = 150;
 
 char info[256];
 
@@ -29,29 +29,29 @@ DWORD WINAPI ThreadFunc(void*)
 		// Если программа запущена с библиотекой, имеющей такое же название как и оригинальная библиотека dynamic_lib.dll
 		if (heightFunc == NULL && sse3Func == NULL)
 		{
-			sprintf_s(info, " В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\n Возможно вы используете не оригинальную библиотеку!");
+			sprintf_s(info, "\n В динамической библиотеки dynamic_lib.dll не найдены нужные функции!\n Возможно вы используете не оригинальную библиотеку!");
 		}
 		else if (heightFunc != NULL && sse3Func == NULL)
 		{
 			int height = heightFunc();
-			sprintf_s(info, " Высота экрана: %d (в пикселях)\n Поддержка SSE3: не удалось определить", height);
+			sprintf_s(info, "\n Высота экрана: %d (в пикселях)\n Поддержка SSE3: не удалось определить", height);
 		}
 		else if (heightFunc != NULL && sse3Func != NULL)
 		{
 			int height = heightFunc();
 			sse3 = sse3Func();
 			if (sse3 == 1)
-				sprintf_s(info, " Высота экрана: %d (в пикселях)\n Технология SSE3: поддерживается", height);
+				sprintf_s(info, "\n Высота экрана: %d (в пикселях)\n Технология SSE3: поддерживается", height);
 			else
-				sprintf_s(info, " Высота экрана: %d (в пикселях)\n Технология SSE3: не поддерживается", height);
+				sprintf_s(info, "\n Высота экрана: %d (в пикселях)\n Технология SSE3: не поддерживается", height);
 		}
 		else if (heightFunc == NULL && sse3Func != NULL)
 		{
 			sse3 = sse3Func();
 			if (sse3 == 1)
-				sprintf_s(info, " Высота экрана: не удалось определить\n Технология SSE3: поддерживается");
+				sprintf_s(info, "\n Высота экрана: не удалось определить\n Технология SSE3: поддерживается");
 			else
-				sprintf_s(info, " Высота экрана: не удалось определить\n Технология SSE3: не поддерживается");
+				sprintf_s(info, "\n Высота экрана: не удалось определить\n Технология SSE3: не поддерживается");
 		}
 		SetWindowText(label, LPCSTR(info));
 		FreeLibrary(hinstLib);
@@ -120,7 +120,7 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 
 	hwnd = CreateWindow(szClassName, szTitle,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-		600, 600, Width, Height, NULL, NULL, hThisInst, NULL);
+		600, 500, Width, Height, NULL, NULL, hThisInst, NULL);
 
 	label = CreateWindow("static", "",
 		WS_CHILD | WS_VISIBLE,
@@ -128,8 +128,8 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 		hwnd, NULL, hThisInst, NULL);
 
 	CreateWindow("button", "Обновить данные",
-		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_VCENTER | BS_CENTER,
-		Width - 2 * ButtonWidth - 10, Height - ButtonHeight*3, ButtonWidth, ButtonHeight,
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		50, Height - ButtonHeight*3, ButtonWidth, ButtonHeight,
 		hwnd, NULL, hThisInst, NULL);
 
 	hThread = CreateThread(NULL, 0, ThreadFunc, NULL, 0, &IDThread);
