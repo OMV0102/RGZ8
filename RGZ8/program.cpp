@@ -53,7 +53,7 @@ DWORD WINAPI ThreadFunc(void*)
 	}
 	else	// Если библиотека не загрузилась
 	{
-		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку\n \" Обновить данные \".");
+		sprintf_s(info, " Библиотека dynamic_lib.dll не найдена!\n Поместите файл dynamic_lib.dll в папку\n с программой и нажмите кнопку\n \" Обновить\".");
 	}
 	SetWindowText(label, LPCSTR(info));	// Записываем текст в текстовое поле
 	return 0;
@@ -117,7 +117,7 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 	// Создание окна
 	hwnd = CreateWindow(szClassName, szTitle,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-		600, 500, 320, 155, NULL, NULL, hThisInst, NULL);
+		600, 500, 320, 145, NULL, NULL, hThisInst, NULL);
 
 	// Создание текстового поля
 	label = CreateWindow("static", "",
@@ -126,9 +126,9 @@ int WINAPI WinMain(HINSTANCE hThisInst,	HINSTANCE hPrevInst, LPSTR str,int nWinM
 		hwnd, NULL, hThisInst, NULL);
 
 	// Создание кнопки
-	CreateWindow("button", "Обновить данные",
+	CreateWindow("button", "Обновить",
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,	// Стиль кнопки
-		75, 80, 150, 30,						// Положение и размеры
+		95, 80, 110, 20,						// Положение и размеры
 		hwnd, NULL, hThisInst, NULL);
 
 	// Вызов функцию ThreadFunc в новом потоке
